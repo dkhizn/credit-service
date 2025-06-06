@@ -108,12 +108,13 @@
 - **application (use-case)**  
   `internal/application/credit-service/`  
   – `CredtiService`:
-  - `Execute(*Credit)` – валидация, расчёты, сохранение в кэш;
+  - `Execute(*Credit)` – расчёты, сохранение в кэш;
   - `GetAll() []Credit` – вернуть все сохранённые кредиты.
 
 - **adapters / primary (HTTP-adapter)**  
   `internal/adapters/primary/http-adapter/controller/`  
-  – контроллеры:  
+  – контроллеры:
+  
   - `Post(w,r)` → DTO → `ToDomain` → `svc.Execute` → DTO ответа;
   - `Cache(w,r)` → `svc.GetAll()` → формирование JSON-списка.  
   `internal/adapters/primary/http-adapter/router/router.go` – регистрация маршрутов.
