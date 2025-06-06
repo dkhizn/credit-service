@@ -15,7 +15,9 @@
   - [4. Сборка Docker-образа](#4-сборка-docker-образа)  
   - [5. Запуск контейнера](#5-запуск-контейнера)  
   - [6. Остановка и удаление контейнера](#6-остановка-и-удаление-контейнера)  
-
+- [REST API](#rest-api)  
+  - [POST /execute](#post-execute)  
+  - [GET /cache](#get-cache) 
 ## Описание
 
 Этот сервис реализует ипотечный калькулятор, который на вход принимает JSON-запрос с параметрами объекта недвижимости, первоначальным взносом, сроком и программой кредитования.  
@@ -132,10 +134,159 @@ port: 8080
 
 ## Запуск через Makefile
 
-1. **Локальный запуск**  
-   ```bash
-   make run
+Проект полностью управляется через `Makefile`.
 
+### 1. Локальный запуск
 
+```bash
+make run
+```
+
+Запускает Docker-контейнер, публикует порт `8080`.
+
+### 2. Тестирование
+
+```bash
+make test
+```
+
+Запускает юнит-тесты. Покрытие:
+
+- Контроллеры: ~92%
+- Middleware и роутер: 100%
+- Репозиторий: 100%
+- Бизнес-логика (CreditService): ~94%
+- Конфигурация: 100%
+
+### 3. Линтинг
+
+```bash
+make lint
+```
+
+Анализ кода через `golangci-lint`.
+
+### 4. Сборка Docker-образа
+
+```bash
+make build
+```
+
+Собирает Docker-образ с бинарником `credit-service`.
+
+### 5. Запуск контейнера
+
+```bash
+make run
+```
+
+Запускает сервис в Docker-контейнере.
+
+### 6. Остановка и удаление контейнера
+
+```bash
+make stop
+```
+
+Останавливает и удаляет контейнер.  
+Для полной очистки:
+
+```bash
+make clean
+```
+
+## REST API
+
+### POST /execute
+
+Запрос:
+
+```json
+{
+  "params": {
+    "object_cost": 5000000,
+    "initial_payment": 1000000,
+    "months": 240
+  },
+  "program": {
+    "salary": true
+  }
+}
+```
+
+Ответ:
+
+```json
+{
+  "result": {
+    "params": {
+      "object_cost": 5000000,
+      "initial_payment": 1000000,
+      "months": 240
+    },
+    "program": {
+      "salary": true
+    },
+    "aggregates": {
+      "rate": 8,
+      "loan_sum": 4000000,
+      "monthly_payment": 33458,
+      "overpayment": 4029920,
+      "last_payment_date": "2044-02-18"
+    }
+  }
+}
+```
+
+Ошибки:
+
+```json
+{
+  "error": "initial_payment must be at least 20% of object_cost"
+}
+```
+
+### GET /cache
+
+Если кэш пуст:
+
+```json
+{
+  "error": "empty cache"
+}
+```
+
+Если есть записи:
+
+```json
+[
+  {
+    "id": 0,
+    "params": { ... },
+    "program": { ... },
+    "aggregates": { ... }
+  },
+  ...
+]
+```
+
+## Примеры запросов
+
+```bash
+curl -X POST http://localhost:8080/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "params": {
+      "object_cost": 5000000,
+      "initial_payment": 1000000,
+      "months": 240
+    },
+    "program": {
+      "salary": true
+    }
+  }'
+
+curl http://localhost:8080/cache
+```
 
 
